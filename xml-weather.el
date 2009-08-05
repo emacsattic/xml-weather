@@ -56,6 +56,8 @@
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
+    (define-key map (kbd "M-<down>") 'xml-weather-next-day)
+    (define-key map (kbd "M-<up>") 'xml-weather-precedent-day)
     map)
   "Keymap used for `xml-weather' commands.")
 
@@ -65,9 +67,20 @@
 Special commands:
 \\{xml-weather-mode-map}")
 
+;;;###autoload
 (defun xml-weather-quit ()
   (interactive)
   (quit-window))
+
+;;;###autoload
+(defun xml-weather-next-day ()
+  (interactive)
+  (forward-char 1) (search-forward "*" nil t) (forward-line 0))
+
+;;;###autoload
+(defun xml-weather-precedent-day ()
+  (interactive)
+  (forward-char -1) (search-backward "*" nil t) (forward-line 0))
 
 ;; First step: Get ID of places
 (defun tv-xml-weather-get-place-id (place)
