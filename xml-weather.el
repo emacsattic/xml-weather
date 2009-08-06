@@ -222,6 +222,11 @@ Special commands:
          do
            (insert (concat i "\n\n")))))
   (pop-to-buffer "*xml-weather-meteo*")
+  (goto-char (point-max))
+  (newline)
+  (insert-button "Forecast for next 4 days"
+                 'action 'xml-weather-button-func1
+                 'face '((:background "green")))
   (goto-char (point-min))
   (xml-weather-mode))
 
@@ -258,23 +263,31 @@ Special commands:
     (goto-char (point-min))
     (xml-weather-mode)))
 
-(defun tv-xml-weather-now (id)
-  (tv-xml-weather-get-info-on-id id)
-  (tv-xml-weather-pprint-today))
+(defvar xml-weather-last-id nil)
+(defun tv-xml-weather-now (id-pair)
+  (let ((id      (cdr id-pair)))
+    (setq xml-weather-last-id id-pair)
+    (tv-xml-weather-get-info-on-id id)
+    (tv-xml-weather-pprint-today)))
 
-(defun tv-xml-weather-forecast (id station)
-  (tv-xml-weather-get-info-on-id id)
-  (tv-xml-weather-pprint-forecast station))
-  
+(defun tv-xml-weather-forecast (id-pair)
+  (let ((id      (cdr id-pair))
+        (station (car id-pair)))
+  (setq xml-weather-last-id id-pair)
+  (tv-xml-weather-get-info-on-id  id)
+  (tv-xml-weather-pprint-forecast station)))
+
+(defun xml-weather-button-func1 (button)
+  (tv-xml-weather-forecast xml-weather-last-id))
+
 ;;;###autoload
 (defun tv-xml-weather-today-at (place)
   (interactive "sName: ")
   (let* ((id-list   (tv-xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list)))
-    (setq id (cdr (assoc id id-list)))
-    ;; setup buffer
-    (tv-xml-weather-now id)))
+         (id        (completing-read "Choose a place: " name-list))
+         (id-pair   (assoc id id-list)))
+    (tv-xml-weather-now id-pair)))
 
 ;;;###autoload
 (defun tv-xml-weather-forecast-at (place)
@@ -282,10 +295,9 @@ Special commands:
   (let* ((id-list   (tv-xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
          (id        (completing-read "Choose a place: " name-list))
-         (station   id))
-    (setq id (cdr (assoc id id-list)))
+         (id-pair   (assoc id id-list)))
     ;; setup buffer
-    (tv-xml-weather-forecast id station)))
+    (tv-xml-weather-forecast id-pair)))
 
 
 ;; Provide
