@@ -217,14 +217,32 @@ Special commands:
       (loop for i in (cadr (assoc 'info data))
          if (listp i)
          do
-           (insert (concat "  " (car i) (propertize (cdr i) 'face '((:foreground "red"))) "\n"))
+           (insert (concat "  " (car i)))
+           (cond ((string-match "sunny" (cdr i))
+                  (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                    (insert-image img)
+                    (insert (propertize (cdr i) 'face '((:foreground "red"))) "\n")))
+                 ((string-match "\\(cloud\\|P Cloudy\\)" (cdr i))
+                  (let ((img (create-image "~/download/weather-icons2/cloudy_sm_anim.gif")))
+                    (insert-image img)
+                    (insert (propertize (cdr i) 'face '((:foreground "red"))) "\n")))
+                 ((string-match "\\(T-Showers\\|T-Shwrs\\|Rain/Thunder\\)" (cdr i))
+                  (let ((img (create-image "~/download/weather-icons2/tstorms_sm_anim.gif")))
+                    (insert-image img)
+                    (insert (propertize (cdr i) 'face '((:foreground "red"))) "\n")))
+                 ((string-match "\\(clear\\|fair\\)" (cdr i))
+                  (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                    (insert-image img)
+                    (insert (propertize (cdr i) 'face '((:foreground "red"))) "\n")))
+                 (t
+                  (insert (propertize (cdr i) 'face '((:foreground "red"))) "\n")))
          else
          do
            (insert (concat i "\n\n")))))
   (pop-to-buffer "*xml-weather-meteo*")
   (goto-char (point-max))
   (newline)
-  (insert-button "Forecast for next 4 days"
+  (insert-button "[Forecast for next 4 days]"
                  'action 'xml-weather-button-func1
                  'face '((:background "green")))
   (goto-char (point-min))
@@ -245,7 +263,25 @@ Special commands:
               for m in i
               if (listp m)
               do
-                (insert (concat "  " (car m) (propertize (cdr m) 'face '((:foreground "red"))) "\n"))
+                (insert (concat "  " (car m)))
+                (cond ((string-match "sunny" (cdr m))
+                       (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr m) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(cloud\\|P Cloudy\\)" (cdr m))
+                       (let ((img (create-image "~/download/weather-icons2/cloudy_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr m) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(T-Showers\\|T-Shwrs\\|Rain/Thunder\\)" (cdr m))
+                       (let ((img (create-image "~/download/weather-icons2/tstorms_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr m) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(clear\\|fair\\)" (cdr m))
+                       (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr m) 'face '((:foreground "red"))) "\n")))
+                      (t
+                       (insert (propertize (cdr m) 'face '((:foreground "red"))) "\n")))
               else
               do
                 (insert (concat "\n* " (propertize m 'face '((:foreground "blue")))"\n\n"))
@@ -258,7 +294,25 @@ Special commands:
               for a in j
               if (listp a)
               do
-                (insert (concat "  " (car a) (propertize (cdr a) 'face '((:foreground "red"))) "\n")))))
+                (insert (concat "  " (car a)))
+                (cond ((string-match "sunny" (cdr a))
+                       (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr a) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(cloud\\|P Cloudy\\)" (cdr a))
+                       (let ((img (create-image "~/download/weather-icons2/cloudy_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr a) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(T-Showers\\|T-Shwrs\\|Rain/Thunder\\)" (cdr a))
+                       (let ((img (create-image "~/download/weather-icons2/tstorms_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr a) 'face '((:foreground "red"))) "\n")))
+                      ((string-match "\\(clear\\|fair\\)" (cdr a))
+                       (let ((img (create-image "~/download/weather-icons2/sun_sm_anim.gif")))
+                         (insert-image img)
+                         (insert (propertize (cdr a) 'face '((:foreground "red"))) "\n")))
+                      (t
+                       (insert (propertize (cdr a) 'face '((:foreground "red"))) "\n"))))))
     (pop-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
     (xml-weather-mode)))
