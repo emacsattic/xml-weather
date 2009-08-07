@@ -82,6 +82,21 @@ Special commands:
   (interactive)
   (forward-char -1) (search-backward "*" nil t) (forward-line 0))
 
+(defun xml-weather-authentify ()
+  "Authentify user from .authinfo file.
+You have to setup correctly `auth-sources' to make this function
+finding the path of your .authinfo file that is normally ~/.authinfo.
+Entry in .authinfo should be:
+machine xoap.weather.com port http login xxxxx password xxxxxx"
+  (let ((xml-weather-auth
+         (auth-source-user-or-password  '("login" "password")
+                                        "xoap.weather.com"
+                                        "http")))
+    (when xml-weather-auth
+      (setq xml-weather-login (car xml-weather-auth)
+            xml-weather-key (cadr xml-weather-auth))
+      nil)))
+
 ;; First step: Get ID of places
 (defun tv-xml-weather-get-place-id (place)
   "Get all ID corresponding to place."
@@ -110,12 +125,17 @@ Special commands:
 ;; &prod=xoap&par=[partner id]&key=[license key]
 
 (defun tv-xml-weather-get-info-on-id (id)
-  (let* ((url  (format xml-weather-format-xml-from-id-url
+  (let* (xml-weather-login
+         xml-weather-key
+         (url  (progn
+                 (unless (and xml-weather-login xml-weather-key)
+                   (xml-weather-authentify))
+                 (format xml-weather-format-xml-from-id-url
                        id
                        xml-weather-unit
                        xml-weather-day-forecast-num
                        xml-weather-login
-                       xml-weather-key))
+                       xml-weather-key)))
          (data (with-current-buffer (url-retrieve-synchronously url)
                  (buffer-string))))
     (with-current-buffer (get-buffer-create "*xml-weather*")
