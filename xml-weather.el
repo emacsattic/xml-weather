@@ -241,7 +241,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
          else
          do
            (insert (concat i "\n\n")))))
-  (pop-to-buffer "*xml-weather-meteo*")
+  (switch-to-buffer "*xml-weather-meteo*")
   (goto-char (point-max))
   (newline)
   (insert-button "[Forecast for next 4 days]"
@@ -295,7 +295,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
               if (listp a)
               do
                 (xml-weather-insert-maybe-icons a))))
-    (pop-to-buffer "*xml-weather-meteo*")
+    (switch-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
     (xml-weather-mode)))
 
