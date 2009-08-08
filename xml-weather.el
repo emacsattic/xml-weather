@@ -46,18 +46,41 @@
 
 (defvar xml-weather-format-id-url
   "http://xoap.weather.com/search/search?where=%s")
+
 (defvar xml-weather-format-xml-from-id-url ; id, unit=m,day-forecast=5,login,key
   "http://xoap.weather.com/weather/local/%s?cc=*&unit=%s&dayf=%s&prod=xoap&par=%s&key=%s")
-(defvar xml-weather-unit "m")
-(defvar xml-weather-login nil) ; TODO:use auth-sources
-(defvar xml-weather-key nil)
-(defvar xml-weather-day-forecast-num 5)
+
+(defvar xml-weather-unit "m"
+  "*m mean metric, you will have wind speed in km/h, temperature in °C and so on.")
+
+(defvar xml-weather-login nil
+  "*Your xml-weather Login.
+You should not set this variable directly. See `xml-weather-authentify'.
+If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
+
+(defvar xml-weather-key nil
+  "*Your xml-weather key.
+You should not set this variable directly. See `xml-weather-authentify'.
+If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
+
+(defvar xml-weather-day-forecast-num 5
+  "*Number of days for forecast; Maximum 10.")
+
+(defvar xml-weather-default-show-message-times 3
+  "*Number of times ticker will show message before stopping.")
+
+(defvar xml-weather-default-id "FRXX0098"
+  "*Your favorite place for weather builtin.
+You can get it with `xml-weather-show-id'.")
+
+(defvar xml-weather-timer-delay 1800
+  "*Send a Builtin all the `xml-weather-timer-delay' seconds.")
 
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
-    (define-key map (kbd "M-<down>") 'xml-weather-next-day)
-    (define-key map (kbd "M-<up>") 'xml-weather-precedent-day)
+    (define-key map (kbd "S-<down>") 'xml-weather-next-day)
+    (define-key map (kbd "S-<up>") 'xml-weather-precedent-day)
     map)
   "Keymap used for `xml-weather' commands.")
 
@@ -98,7 +121,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
       nil)))
 
 ;; First step: Get ID of places
-(defun tv-xml-weather-get-place-id (place)
+(defun xml-weather-get-place-id (place)
   "Get all ID corresponding to place."
   (let* ((url              (format xml-weather-format-id-url place))
          (url-request-data (encode-coding-string place 'utf-8))
@@ -124,7 +147,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 ;; http://xoap.weather.com/weather/local/NLXX0002?cc=*&dayf=5
 ;; &prod=xoap&par=[partner id]&key=[license key]
 
-(defun tv-xml-weather-get-info-on-id (id)
+(defun xml-weather-get-info-on-id (id)
   (let* (xml-weather-login
          xml-weather-key
          (url  (progn
@@ -143,7 +166,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
       (insert data))))
 
 ;; Third step convert xml info to alist
-(defun tv-xml-weather-get-alist ()
+(defun xml-weather-get-alist ()
   (with-current-buffer "*xml-weather*"
     (let* ((loc           (xml-get-children (car (xml-parse-region (point-min)
                                                                    (point-max)))
@@ -229,8 +252,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
       (list today-info morning-alist night-alist))))
 
 ;; Last step pprint the infos in alist
-(defun tv-xml-weather-pprint-today ()
-  (let ((data (tv-xml-weather-get-alist)))
+(defun xml-weather-pprint-today ()
+  (let ((data (xml-weather-get-alist)))
     (with-current-buffer (get-buffer-create "*xml-weather-meteo*")
       (erase-buffer)
       (insert (propertize "* XML-WEATHER\n  ===========\n\n" 'face '((:foreground "Lightgreen"))))
@@ -250,6 +273,76 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (goto-char (point-min))
   (xml-weather-mode))
 
+(defun xml-weather-get-today-list ()
+  (let ((data (xml-weather-get-alist)))
+    (loop for i in (cadr (assoc 'info data))
+       if (listp i)
+       collect (concat (car i) (cdr i)) into a
+       else
+       collect i into b
+       finally return (append a b))))
+
+(defun xml-weather-get-today-string ()
+  (mapconcat 'identity (xml-weather-get-today-list) " | "))
+
+(defun xml-weather-show-id (place)
+  (interactive "sName: ")
+  (let* ((id-list   (xml-weather-get-place-id place))
+         (name-list (loop for i in id-list collect (car i)))
+         (id        (completing-read "Choose a place: " name-list)))
+    (setq id (cdr (assoc id id-list)))
+    (message "ID code for %s is %s" place id)))
+
+(defun* xml-weather-message (&rest msg)
+  (setq msg (concat "  <XML-WEATHER-BUILTIN>: "
+                    (apply 'format msg) ; == (car msg)
+                    "            "))
+  (let* ((minibuf-size   (window-width (minibuffer-window)))
+         (start-msg-size (+ 1 (length "[<] ")))
+         (width          (- minibuf-size start-msg-size))
+         (msglen         (length msg))
+         submsg
+         (count          0)
+         (normal-range   (- msglen width)))
+    (if (< msglen width)
+        (message "%s" msg)
+        (while t
+          (when (> count (1- xml-weather-default-show-message-times))
+            (return-from xml-weather-message))
+          (incf count)
+          (dotimes (i msglen)
+            (setq submsg (if (< i normal-range)
+                             (substring msg i (+ i width))
+                             ;; Rolling is needed.
+                             (concat (substring msg i)
+                                     (substring msg 0 (- (+ i width) msglen)))))
+            (message "[<] %s" submsg)
+            (when (eq i 0) (incf count))
+            (unless (sit-for (cond
+                               ((eq i 0) 1.0)
+                               (t 0.2)))
+              (return-from xml-weather-message)))
+          (garbage-collect)))))
+
+
+(defun xml-weather-run-message-builtin (id)
+  (xml-weather-get-info-on-id id)
+  (xml-weather-message (xml-weather-get-today-string)))
+
+(defvar xml-weather-ticker-timer nil)
+(defun xml-weather-ticker-run-with-timer ()
+  (interactive)
+  (setq xml-weather-ticker-timer
+        (run-with-timer 1
+                        xml-weather-timer-delay
+                        #'(lambda ()
+                            (xml-weather-run-message-builtin xml-weather-default-id)))))
+
+(defun xml-weather-ticker-cancel-timer ()
+  (interactive)
+  (cancel-timer xml-weather-ticker-timer)
+  (setq xml-weather-ticker-timer nil))
+
 (defun xml-weather-insert-maybe-icons (str)
   (insert (concat "  " (car str)))
   (cond ((string-match "\\(cloud\\|P Cloudy\\)" (cdr str))
@@ -267,8 +360,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
         (t
          (insert (propertize (cdr str) 'face '((:foreground "red"))) "\n"))))
   
-(defun tv-xml-weather-pprint-forecast (station)
-  (let ((data (tv-xml-weather-get-alist)))
+(defun xml-weather-pprint-forecast (station)
+  (let ((data (xml-weather-get-alist)))
     (with-current-buffer (get-buffer-create "*xml-weather-meteo*")
       (erase-buffer)
       (insert (propertize "* XML-WEATHER\n  ===========\n\n" 'face '((:foreground "Lightgreen"))))
@@ -300,40 +393,40 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     (xml-weather-mode)))
 
 (defvar xml-weather-last-id nil)
-(defun tv-xml-weather-now (id-pair)
+(defun xml-weather-now (id-pair)
   (let ((id      (cdr id-pair)))
     (setq xml-weather-last-id id-pair)
-    (tv-xml-weather-get-info-on-id id)
-    (tv-xml-weather-pprint-today)))
+    (xml-weather-get-info-on-id id)
+    (xml-weather-pprint-today)))
 
-(defun tv-xml-weather-forecast (id-pair)
+(defun xml-weather-forecast (id-pair)
   (let ((id      (cdr id-pair))
         (station (car id-pair)))
   (setq xml-weather-last-id id-pair)
-  (tv-xml-weather-get-info-on-id  id)
-  (tv-xml-weather-pprint-forecast station)))
+  (xml-weather-get-info-on-id  id)
+  (xml-weather-pprint-forecast station)))
 
 (defun xml-weather-button-func1 (button)
-  (tv-xml-weather-forecast xml-weather-last-id))
+  (xml-weather-forecast xml-weather-last-id))
 
 ;;;###autoload
-(defun tv-xml-weather-today-at (place)
+(defun xml-weather-today-at (place)
   (interactive "sName: ")
-  (let* ((id-list   (tv-xml-weather-get-place-id place))
+  (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
          (id        (completing-read "Choose a place: " name-list))
          (id-pair   (assoc id id-list)))
-    (tv-xml-weather-now id-pair)))
+    (xml-weather-now id-pair)))
 
 ;;;###autoload
-(defun tv-xml-weather-forecast-at (place)
+(defun xml-weather-forecast-at (place)
   (interactive "sName: ")
-  (let* ((id-list   (tv-xml-weather-get-place-id place))
+  (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
          (id        (completing-read "Choose a place: " name-list))
          (id-pair   (assoc id id-list)))
     ;; setup buffer
-    (tv-xml-weather-forecast id-pair)))
+    (xml-weather-forecast id-pair)))
 
 
 ;; Provide
