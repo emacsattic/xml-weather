@@ -280,7 +280,9 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (let ((data (xml-weather-get-alist)))
     (loop for i in (cadr (assoc 'info data))
        if (listp i)
-       collect (concat (car i) (cdr i)) into a
+       collect (if (eq (safe-length i) 1)
+                   (concat (car i) (cdr i))
+                   (concat (car i) (car (last i)))) into a
        else
        collect i into b
        finally return (append a b))))
