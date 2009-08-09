@@ -359,9 +359,14 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 (defun xml-weather-insert-maybe-icons (str)
   (insert (concat "  " (car str)))
   (if (equal (car str) "Cond:")
-      (let ((img (create-image (expand-file-name (cadr str) xml-weather-default-directory))))
-        (insert-image img)
-        (insert (propertize (car (last str)) 'face '((:foreground "red"))) "\n"))
+      (let* ((fname (cadr str))
+             (img   (unless (equal fname ".png")
+                      (create-image (expand-file-name fname xml-weather-default-directory)))))
+        (if img
+            (progn
+              (insert-image img)
+              (insert (propertize (car (last str)) 'face '((:foreground "red"))) "\n"))
+            (insert "")))
       (insert (propertize (cdr str) 'face '((:foreground "red"))) "\n")))
   
 (defun xml-weather-pprint-forecast (station)
