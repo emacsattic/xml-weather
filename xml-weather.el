@@ -27,10 +27,48 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;; 
-;;; Commentary: 
-;; 
-;; 
-;; 
+;;; Commentary:
+;;
+;; Install:
+;; =======
+;;
+;; 1)
+;; To obtain the feed, you must first register with weather.com[1] to obtain a license key.
+;; The registration is free but mandatory.
+;; Once you've registered, you'll receive a confirmation email and a link to the software developer's kit.
+;; Included in the kit is a comprehensive user's guide, numerous icons, and instructions (and restrictions)
+;; on use of The Weather Channel logos.
+;; [1]http://www.weather.com/services/xmloap.html
+;; 2)
+;; Once you have your login and license key, you have two ways to setup them:
+;; A) The bad way:
+;;    Add to .emacs:
+;;    (setq xml-weather-login "your login")
+;;    (setq xml-weather-key "your key")
+;; B) The good way:
+;;    Be sure to require `auth-sources' and set it up.
+;;    Add to your ~/.authinfo file this line:(change login and pwd)
+;;    machine xoap.weather.com port http login xxxxx password xxxxxx
+;; 3) Add to .emacs (be sure xml-weather.el is in your load-path):
+;;    (autoload 'xml-weather-today-at "xml-weather")
+;;    (autoload 'xml-weather-forecast-at "xml-weather")
+;;    (autoload 'xml-weather-ticker-run-with-timer "xml-weather")
+;; 4) Get the icons set from the link to the software developer's kit
+;;    you will find in your email.
+;;    Put the icons in the directory of your choice and set it in your .emacs:
+;;    (setq xml-weather-default-icons-directory "path/to/your/icons")
+;;
+;; Usage:
+;; =====
+;; M-x xml-weather-today-at (you will have a button for forecast)
+;; M-x xml-weather-forecast-at (go straight to forecast)
+;; xml-weather.el provide a ticker that show a builtin for current conditions
+;; all the `xml-weather-timer-delay' seconds.
+;; You will have to set your current location with `xml-weather-default-id'.
+;; You can fetch it with M-x xml-weather-show-id.
+;; Run the ticker with M-x xml-weather-ticker-run-with-timer
+;; Stop timer with M-x xml-weather-ticker-cancel-timer.
+;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
 ;;; Change log:
@@ -64,7 +102,7 @@ You should not set this variable directly. See `xml-weather-authentify'.
 If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
 
 (defvar xml-weather-day-forecast-num 5
-  "*Number of days for forecast; Maximum 10.")
+  "*Number of days for forecast; Maximum 5.")
 
 (defvar xml-weather-default-show-message-times 1
   "*Number of times ticker will show message before stopping.")
@@ -76,6 +114,9 @@ You can get it with `xml-weather-show-id'.")
 (defvar xml-weather-timer-delay 3600
   "*Send a Builtin all the `xml-weather-timer-delay' seconds.")
 
+(defvar xml-weather-default-icons-directory
+  "/home/thierry/download/xml-weather-icons/icons/31x31")
+
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
@@ -85,7 +126,7 @@ You can get it with `xml-weather-show-id'.")
   "Keymap used for `xml-weather' commands.")
 
 (define-derived-mode xml-weather-mode text-mode "xml-weather"
-                     "Major mode to recurse in a tree and perform diverses actions on files.
+                     "Major mode to get info from xml-weather.
 
 Special commands:
 \\{xml-weather-mode-map}")
@@ -164,6 +205,15 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     (with-current-buffer (get-buffer-create "*xml-weather*")
       (erase-buffer)
       (insert data))))
+
+;;;###autoload
+(defun xml-weather-show-id (place)
+  (interactive "sName: ")
+  (let* ((id-list   (xml-weather-get-place-id place))
+         (name-list (loop for i in id-list collect (car i)))
+         (id        (completing-read "Choose a place: " name-list)))
+    (setq id (cdr (assoc id id-list)))
+    (message "ID code for %s is %s" place id)))
 
 ;; Third step convert xml info to alist
 (defun xml-weather-get-alist ()
@@ -276,92 +326,12 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (goto-char (point-min))
   (xml-weather-mode))
 
-(defun xml-weather-get-today-list ()
-  (let ((data (xml-weather-get-alist)))
-    (loop for i in (cadr (assoc 'info data))
-       if (listp i)
-       collect (if (eq (safe-length i) 1)
-                   (concat (car i) (cdr i))
-                   (concat (car i) (car (last i)))) into a
-       else
-       collect i into b
-       finally return (append a b))))
-
-(defun xml-weather-get-today-string ()
-  (mapconcat 'identity (xml-weather-get-today-list) " | "))
-
-;;;###autoload
-(defun xml-weather-show-id (place)
-  (interactive "sName: ")
-  (let* ((id-list   (xml-weather-get-place-id place))
-         (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list)))
-    (setq id (cdr (assoc id id-list)))
-    (message "ID code for %s is %s" place id)))
-
-(defun* xml-weather-message (&rest msg)
-  (setq msg (concat "  <XML-WEATHER-BUILTIN>: "
-                    (apply 'format msg) ; == (car msg)
-                    "            "))
-  (let* ((minibuf-size   (window-width (minibuffer-window)))
-         (start-msg-size (+ 1 (length "[<] ")))
-         (width          (- minibuf-size start-msg-size))
-         (msglen         (length msg))
-         submsg
-         (count          0)
-         (normal-range   (- msglen width)))
-    (if (< msglen width)
-        (message "%s" msg)
-        (while t
-          (when (> count xml-weather-default-show-message-times)
-            (return-from xml-weather-message
-              (when xml-weather-ticker-timer
-                (message "Next xml-weather Builtin in %d mn" (/ xml-weather-timer-delay 60)))))
-          (incf count)
-          (dotimes (i msglen)
-            (setq submsg (if (< i normal-range)
-                             (substring msg i (+ i width))
-                             ;; Rolling is needed.
-                             (concat (substring msg i)
-                                     (substring msg 0 (- (+ i width) msglen)))))
-            (message "[<] %s" submsg)
-            (when (eq i 0) (incf count))
-            (unless (sit-for (cond
-                               ((eq i 0) 1.0)
-                               (t 0.2)))
-              (return-from xml-weather-message)))
-          (garbage-collect)))))
-
-
-(defun xml-weather-run-message-builtin (id)
-  (xml-weather-get-info-on-id id)
-  (xml-weather-message (xml-weather-get-today-string)))
-
-(defvar xml-weather-ticker-timer nil)
-
-;;;###autoload
-(defun xml-weather-ticker-run-with-timer ()
-  (interactive)
-  (setq xml-weather-ticker-timer
-        (run-with-timer 60
-                        xml-weather-timer-delay
-                        #'(lambda ()
-                            (xml-weather-run-message-builtin xml-weather-default-id)))))
-
-;;;###autoload
-(defun xml-weather-ticker-cancel-timer ()
-  (interactive)
-  (cancel-timer xml-weather-ticker-timer)
-  (setq xml-weather-ticker-timer nil))
-
-(defvar xml-weather-default-directory
-  "/home/thierry/download/xml-weather-icons/icons/31x31")
 (defun xml-weather-insert-maybe-icons (str)
   (insert (concat "  " (car str)))
   (if (equal (car str) "Cond:")
       (let* ((fname (cadr str))
              (img   (unless (equal fname ".png")
-                      (create-image (expand-file-name fname xml-weather-default-directory)))))
+                      (create-image (expand-file-name fname xml-weather-default-icons-directory)))))
         (if img
             (progn
               (insert-image img)
@@ -437,6 +407,76 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     ;; setup buffer
     (xml-weather-forecast id-pair)))
 
+;;; xml-weather ticker
+(defun xml-weather-get-today-list ()
+  (let ((data (xml-weather-get-alist)))
+    (loop for i in (cadr (assoc 'info data))
+       if (listp i)
+       collect (if (eq (safe-length i) 1)
+                   (concat (car i) (cdr i))
+                   (concat (car i) (car (last i)))) into a
+       else
+       collect i into b
+       finally return (append a b))))
+
+(defun xml-weather-get-today-string ()
+  (mapconcat 'identity (xml-weather-get-today-list) " | "))
+
+
+(defun* xml-weather-message (&rest msg)
+  (setq msg (concat "  <XML-WEATHER-BUILTIN>: "
+                    (apply 'format msg) ; == (car msg)
+                    "            "))
+  (let* ((minibuf-size   (window-width (minibuffer-window)))
+         (start-msg-size (+ 1 (length "[<] ")))
+         (width          (- minibuf-size start-msg-size))
+         (msglen         (length msg))
+         submsg
+         (count          0)
+         (normal-range   (- msglen width)))
+    (if (< msglen width)
+        (message "%s" msg)
+        (while t
+          (when (> count xml-weather-default-show-message-times)
+            (return-from xml-weather-message
+              (when xml-weather-ticker-timer
+                (message "Next xml-weather Builtin in %d mn" (/ xml-weather-timer-delay 60)))))
+          (incf count)
+          (dotimes (i msglen)
+            (setq submsg (if (< i normal-range)
+                             (substring msg i (+ i width))
+                             ;; Rolling is needed.
+                             (concat (substring msg i)
+                                     (substring msg 0 (- (+ i width) msglen)))))
+            (message "[<] %s" submsg)
+            (when (eq i 0) (incf count))
+            (unless (sit-for (cond
+                               ((eq i 0) 1.0)
+                               (t 0.2)))
+              (return-from xml-weather-message)))
+          (garbage-collect)))))
+
+
+(defun xml-weather-run-message-builtin (id)
+  (xml-weather-get-info-on-id id)
+  (xml-weather-message (xml-weather-get-today-string)))
+
+(defvar xml-weather-ticker-timer nil)
+
+;;;###autoload
+(defun xml-weather-ticker-run-with-timer ()
+  (interactive)
+  (setq xml-weather-ticker-timer
+        (run-with-timer 60
+                        xml-weather-timer-delay
+                        #'(lambda ()
+                            (xml-weather-run-message-builtin xml-weather-default-id)))))
+
+;;;###autoload
+(defun xml-weather-ticker-cancel-timer ()
+  (interactive)
+  (cancel-timer xml-weather-ticker-timer)
+  (setq xml-weather-ticker-timer nil))
 
 ;; Provide
 (provide 'xml-weather)
