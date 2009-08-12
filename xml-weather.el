@@ -326,18 +326,23 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (goto-char (point-min))
   (xml-weather-mode))
 
-(defun xml-weather-insert-maybe-icons (str)
-  (insert (concat "  " (car str)))
-  (if (equal (car str) "Cond:")
-      (let* ((fname (cadr str))
-             (img   (unless (equal fname ".png")
-                      (create-image (expand-file-name fname xml-weather-default-icons-directory)))))
-        (if img
-            (progn
-              (insert-image img)
-              (insert (propertize (car (last str)) 'face '((:foreground "red"))) "\n"))
-            (insert "")))
-      (insert (propertize (cdr str) 'face '((:foreground "red"))) "\n")))
+(defun xml-weather-insert-maybe-icons (elm)
+  (insert (concat "  " (car elm)))
+  (if (file-exists-p xml-weather-default-icons-directory)
+      (if (equal (car elm) "Cond:")
+          (let* ((fname (cadr elm))
+                 (img   (unless (equal fname ".png")
+                          (create-image (expand-file-name fname xml-weather-default-icons-directory)))))
+            (if img
+                (progn
+                  (insert-image img)
+                  (insert (propertize (car (last elm)) 'face '((:foreground "red"))) "\n"))
+                (insert "")))
+          (insert (propertize (cdr elm) 'face '((:foreground "red"))) "\n"))
+      (let ((info (if (eq (safe-length elm) 1)
+                      (concat (car i) (cdr elm))
+                      (concat (car elm) (car (last elm))))))
+        (insert (propertize info 'face '((:foreground "red"))) "\n"))))
   
 (defun xml-weather-pprint-forecast (station)
   (let ((data (xml-weather-get-alist)))
