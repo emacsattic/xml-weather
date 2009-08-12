@@ -1,13 +1,14 @@
-;;; xml-weather.el --- 
+;;; xml-weather.el --- Get xml-weather infos in emacs. 
 ;; 
-;; Author: thierry
-;; Maintainer: 
-;; 
+;; Author: Thierry Volpiatto
+;; Maintainer: Thierry Volpiatto
+;; Copyright (C) 2009, Thierry Volpiatto, all rights reserved.
+
 ;; Created: lun. août  3 10:41:46 2009 (+0200)
 ;; Version: 
-;; URL: 
+;; X-URL: http://mercurial.intuxication.org/hg/xml-weather  
 ;; Keywords: 
-;; Compatibility: 
+;; Compatibility: emacs23
 ;; 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
