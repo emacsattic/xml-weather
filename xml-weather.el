@@ -340,8 +340,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
                 (insert "")))
           (insert (propertize (cdr elm) 'face '((:foreground "red"))) "\n"))
       (let ((info (if (eq (safe-length elm) 1)
-                      (concat (car i) (cdr elm))
-                      (concat (car elm) (car (last elm))))))
+                      (cdr elm)
+                      (car (last elm)))))
         (insert (propertize info 'face '((:foreground "red"))) "\n"))))
   
 (defun xml-weather-pprint-forecast (station)
