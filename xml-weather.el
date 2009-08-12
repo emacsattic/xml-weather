@@ -473,10 +473,10 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 (defun xml-weather-ticker-run-with-timer ()
   (interactive)
   (setq xml-weather-ticker-timer
-        (run-with-timer 60
-                        xml-weather-timer-delay
-                        #'(lambda ()
-                            (xml-weather-run-message-builtin xml-weather-default-id)))))
+        (run-with-idle-timer 60
+                             xml-weather-timer-delay
+                             #'(lambda ()
+                                 (xml-weather-run-message-builtin xml-weather-default-id)))))
 
 ;;;###autoload
 (defun xml-weather-ticker-cancel-timer ()
