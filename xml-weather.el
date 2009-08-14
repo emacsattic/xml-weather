@@ -113,7 +113,9 @@ If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
 You can get it with `xml-weather-show-id'.")
 
 (defvar xml-weather-timer-delay 3600
-  "*Send a Builtin all the `xml-weather-timer-delay' seconds.")
+  "*Send a new Builtin all the `xml-weather-timer-delay' seconds.")
+
+(defvar xml-weather-timer-idle-delay 300)
 
 (defvar xml-weather-default-icons-directory
   "/home/thierry/download/xml-weather-icons/icons/31x31")
@@ -445,7 +447,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
         (while t
           (when (> count xml-weather-default-show-message-times)
             (return-from xml-weather-message
-              (when xml-weather-ticker-timer
+              (when xml-weather-ticker-timer1
                 (message "Next xml-weather Builtin in %d mn" (/ xml-weather-timer-delay 60)))))
           (incf count)
           (dotimes (i msglen)
@@ -463,26 +465,38 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
           (garbage-collect)))))
 
 
-(defun xml-weather-run-message-builtin (id)
-  (xml-weather-get-info-on-id id)
+(defun xml-weather-run-message-builtin (&optional id)
+  (when id
+    (xml-weather-get-info-on-id id))
   (xml-weather-message (xml-weather-get-today-string)))
 
-(defvar xml-weather-ticker-timer nil)
-
-;;;###autoload
-(defun xml-weather-ticker-run-with-timer ()
-  (interactive)
-  (setq xml-weather-ticker-timer
-        (run-with-idle-timer 60
+(defvar xml-weather-ticker-timer1 nil)
+(defvar xml-weather-ticker-timer2 nil)
+(defun xml-weather-start-ticker-timers ()
+  (setq xml-weather-ticker-timer1
+        (run-with-timer 60
+                        xml-weather-timer-delay
+                        #'(lambda ()
+                            (xml-weather-get-info-on-id xml-weather-default-id))))
+  (setq xml-weather-ticker-timer2
+        (run-with-idle-timer 65
                              xml-weather-timer-delay
                              #'(lambda ()
-                                 (xml-weather-run-message-builtin xml-weather-default-id)))))
+                                 (xml-weather-run-message-builtin)))))
+  
+  
+;;;###autoload
+(defun xml-weather-run-ticker ()
+  (interactive)
+  (xml-weather-start-ticker-timers))
 
 ;;;###autoload
 (defun xml-weather-ticker-cancel-timer ()
   (interactive)
-  (cancel-timer xml-weather-ticker-timer)
-  (setq xml-weather-ticker-timer nil))
+  (cancel-timer xml-weather-ticker-timer1)
+  (setq xml-weather-ticker-timer1 nil)
+  (cancel-timer xml-weather-ticker-timer2)
+  (setq xml-weather-ticker-timer2 nil))
 
 ;; Provide
 (provide 'xml-weather)
