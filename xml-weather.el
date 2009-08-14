@@ -403,13 +403,12 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;;;###autoload
 (defun xml-weather-forecast-at (place)
-  (interactive "sName: ")
+  (interactive "sCityName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
          (id        (completing-read "Choose a place: " name-list))
          (id-pair   (assoc id id-list)))
     ;; setup buffer
-
     (xml-weather-forecast id-pair)))
 
 ;;; xml-weather ticker
