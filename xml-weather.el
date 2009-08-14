@@ -51,9 +51,7 @@
 ;;    Add to your ~/.authinfo file this line:(change login and pwd)
 ;;    machine xoap.weather.com port http login xxxxx password xxxxxx
 ;; 3) Add to .emacs (be sure xml-weather.el is in your load-path):
-;;    (autoload 'xml-weather-today-at "xml-weather")
-;;    (autoload 'xml-weather-forecast-at "xml-weather")
-;;    (autoload 'xml-weather-ticker-run-with-timer "xml-weather")
+;;    (require 'xml-weather)
 ;; 4) Get the icons set from the link to the software developer's kit
 ;;    you will find in your email.
 ;;    Put the icons in the directory of your choice and set it in your .emacs:
@@ -114,8 +112,6 @@ You can get it with `xml-weather-show-id'.")
 
 (defvar xml-weather-timer-delay 3600
   "*Send a new Builtin all the `xml-weather-timer-delay' seconds.")
-
-(defvar xml-weather-timer-idle-delay 300)
 
 (defvar xml-weather-default-icons-directory
   "/home/thierry/download/xml-weather-icons/icons/31x31")
@@ -413,6 +409,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
          (id        (completing-read "Choose a place: " name-list))
          (id-pair   (assoc id id-list)))
     ;; setup buffer
+
     (xml-weather-forecast id-pair)))
 
 ;;; xml-weather ticker
