@@ -382,11 +382,12 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     (xml-weather-get-info-on-id id)
     (xml-weather-pprint-today)))
 
-(defun xml-weather-forecast (id-pair)
+(defun xml-weather-forecast (id-pair &optional update)
   (let ((id      (cdr id-pair))
         (station (car id-pair)))
   (setq xml-weather-last-id id-pair)
-  (xml-weather-get-info-on-id  id)
+  (when update
+    (xml-weather-get-info-on-id  id))
   (xml-weather-pprint-forecast station)))
 
 (defun xml-weather-button-func1 (button)
@@ -409,7 +410,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
          (id        (completing-read "Choose a place: " name-list))
          (id-pair   (assoc id id-list)))
     ;; setup buffer
-    (xml-weather-forecast id-pair)))
+    (xml-weather-forecast id-pair 'update)))
 
 ;;; xml-weather ticker
 (defun xml-weather-get-today-list ()
