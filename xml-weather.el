@@ -194,11 +194,11 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
                  (unless (and xml-weather-login xml-weather-key)
                    (xml-weather-authentify))
                  (format xml-weather-format-xml-from-id-url
-                       id
-                       xml-weather-unit
-                       xml-weather-day-forecast-num
-                       xml-weather-login
-                       xml-weather-key)))
+                         id
+                         xml-weather-unit
+                         xml-weather-day-forecast-num
+                         xml-weather-login
+                         xml-weather-key)))
          (data (with-current-buffer (url-retrieve-synchronously url)
                  (buffer-string))))
     (with-current-buffer (get-buffer-create "*xml-weather*")
@@ -210,7 +210,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (interactive "sName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list)))
+         (id        (completing-read "Choose a place: " name-list nil t)))
     (setq id (cdr (assoc id id-list)))
     (message "ID code for %s is %s" place id)))
 
@@ -398,7 +398,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (interactive "sCityName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list))
+         (id        (completing-read "Choose a place: " name-list nil t))
          (id-pair   (assoc id id-list)))
     (xml-weather-now id-pair)))
 
@@ -407,9 +407,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (interactive "sCityName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list))
+         (id        (completing-read "Choose a place: " name-list nil t))
          (id-pair   (assoc id id-list)))
-    ;; setup buffer
     (xml-weather-forecast id-pair 'update)))
 
 ;;; xml-weather ticker
@@ -485,6 +484,9 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 ;;;###autoload
 (defun xml-weather-run-ticker ()
   (interactive)
+  (when (or xml-weather-ticker-timer1
+            xml-weather-ticker-timer2)
+    (xml-weather-ticker-cancel-timer))
   (xml-weather-start-ticker-timers))
 
 ;;;###autoload
