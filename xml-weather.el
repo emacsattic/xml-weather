@@ -93,41 +93,52 @@
 (require 'xml)
 (require 'derived)
 
+;;;###autoload
 (defvar xml-weather-format-id-url
   "http://xoap.weather.com/search/search?where=%s")
 
+;;;###autoload
 (defvar xml-weather-format-xml-from-id-url ; id, unit=m,day-forecast=5,login,key
   "http://xoap.weather.com/weather/local/%s?cc=*&unit=%s&dayf=%s&prod=xoap&par=%s&key=%s")
 
+;;;###autoload
 (defvar xml-weather-unit "m"
   "*m mean metric, you will have wind speed in km/h, temperature in °C and so on.")
 
+;;;###autoload
 (defvar xml-weather-login nil
   "*Your xml-weather Login.
 You should not set this variable directly. See `xml-weather-authentify'.
 If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
 
+;;;###autoload
 (defvar xml-weather-key nil
   "*Your xml-weather key.
 You should not set this variable directly. See `xml-weather-authentify'.
 If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
 
+;;;###autoload
 (defvar xml-weather-day-forecast-num 5
   "*Number of days for forecast; Maximum 5.")
 
+;;;###autoload
 (defvar xml-weather-default-show-message-times 1
   "*Number of times ticker will show message before stopping.")
 
+;;;###autoload
 (defvar xml-weather-default-id "FRXX0098"
   "*Your favorite place for weather builtin.
 You can get it with `xml-weather-show-id'.")
 
+;;;###autoload
 (defvar xml-weather-timer-delay 3600
   "*Send a new Builtin all the `xml-weather-timer-delay' seconds.")
 
+;;;###autoload
 (defvar xml-weather-default-icons-directory
   "/home/thierry/download/xml-weather-icons/icons/31x31")
 
+;;;###autoload
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
@@ -136,6 +147,7 @@ You can get it with `xml-weather-show-id'.")
     map)
   "Keymap used for `xml-weather' commands.")
 
+;;;###autoload
 (define-derived-mode xml-weather-mode text-mode "xml-weather"
                      "Major mode to get info from xml-weather.
 
