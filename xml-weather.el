@@ -322,6 +322,10 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (insert-button "[Forecast for next 4 days]"
                  'action 'xml-weather-button-func1
                  'face '((:background "green")))
+  (newline 2)
+  (insert-button "[New Search]"
+                 'action 'xml-weather-button-func3
+                 'face '((:background "green")))
   (goto-char (point-min))
   (xml-weather-mode))
 
@@ -370,16 +374,21 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
               for a in j
               if (listp a)
               do
-                (xml-weather-insert-maybe-icons a))))
+                (xml-weather-insert-maybe-icons a)))
+      (insert "\n\n")
+      (insert-button "[Back To Today weather]"
+                     'action 'xml-weather-button-func2
+                     'face '((:background "green"))))
     (switch-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
     (xml-weather-mode)))
 
 (defvar xml-weather-last-id nil)
-(defun xml-weather-now (id-pair)
+(defun xml-weather-now (id-pair &optional update)
   (let ((id      (cdr id-pair)))
     (setq xml-weather-last-id id-pair)
-    (xml-weather-get-info-on-id id)
+    (when update
+      (xml-weather-get-info-on-id id))
     (xml-weather-pprint-today)))
 
 (defun xml-weather-forecast (id-pair &optional update)
@@ -393,6 +402,13 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 (defun xml-weather-button-func1 (button)
   (xml-weather-forecast xml-weather-last-id))
 
+(defun xml-weather-button-func2 (button)
+  (xml-weather-now xml-weather-last-id))
+
+(defun xml-weather-button-func3 (button)
+  (let ((place (read-string "CityName: ")))
+    (xml-weather-today-at place)))
+
 ;;;###autoload
 (defun xml-weather-today-at (place)
   (interactive "sCityName: ")
@@ -400,7 +416,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
          (name-list (loop for i in id-list collect (car i)))
          (id        (completing-read "Choose a place: " name-list nil t))
          (id-pair   (assoc id id-list)))
-    (xml-weather-now id-pair)))
+    (xml-weather-now id-pair 'update)))
 
 ;;;###autoload
 (defun xml-weather-forecast-at (place)
