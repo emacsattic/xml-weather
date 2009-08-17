@@ -40,32 +40,44 @@
 ;; Included in the kit is a comprehensive user's guide, numerous icons, and instructions (and restrictions)
 ;; on use of The Weather Channel logos.
 ;; [1]http://www.weather.com/services/xmloap.html
+;;
 ;; 2)
-;; Once you have your login and license key, you have two ways to setup them:
+;; Once you have your Partner ID and License Key, you have two ways to set them up:
+;;
 ;; A) The bad way:
 ;;    Add to .emacs:
-;;    (setq xml-weather-login "your login")
-;;    (setq xml-weather-key "your key")
+;;    (setq xml-weather-login "your Partner ID")
+;;    (setq xml-weather-key "your License Key")
+;;
 ;; B) The good way:
-;;    Be sure to require `auth-sources' and set it up.
+;;    Be sure to require `auth-sources' and set it up correctly.
 ;;    Add to your ~/.authinfo file this line:(change login and pwd)
-;;    machine xoap.weather.com port http login xxxxx password xxxxxx
+;;    machine xoap.weather.com port http login <Partner ID> password <License Key>
+;;
 ;; 3) Add to .emacs (be sure xml-weather.el is in your load-path):
 ;;    (require 'xml-weather)
-;; 4) Get the icons set from the link to the software developer's kit
+;;
+;; 4) (Facultative) Get the icons set from the link to the software developer's kit
 ;;    you will find in your email.
 ;;    Put the icons in the directory of your choice and set it in your .emacs:
-;;    (setq xml-weather-default-icons-directory "path/to/your/icons")
-;;
+;;    (setq xml-weather-default-icons-directory "path/to/your/icons/31x31")
+;;    Notes: I use the 31x31 directory but you can choose bigger icons if you want.
+;;           If `xml-weather-default-icons-directory' is nil or doesn't exist,
+;;           your builtin will be displayed with text only.
+;;           
 ;; Usage:
 ;; =====
 ;; M-x xml-weather-today-at (you will have a button for forecast)
 ;; M-x xml-weather-forecast-at (go straight to forecast)
+;; In these two functions you will have two prompt:
+;; One (e.g CityName) where you enter the name of the place where you want meteo
+;; and another where you will have completion for all the possible city names
+;; xml-weather know.(Hit TAB ==> must match).
 ;; xml-weather.el provide a ticker that show a builtin for current conditions
 ;; all the `xml-weather-timer-delay' seconds.
 ;; You will have to set your current location with `xml-weather-default-id'.
 ;; You can fetch it with M-x xml-weather-show-id.
-;; Run the ticker with M-x xml-weather-ticker-run-with-timer
+;; Run the ticker with M-x xml-weather-run-ticker
 ;; Stop timer with M-x xml-weather-ticker-cancel-timer.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
