@@ -126,17 +126,25 @@ If you have an xml-weather entry in ~/.authinfo, leave it to nil.")
   "*Number of times ticker will show message before stopping.")
 
 ;;;###autoload
+(defvar xml-weather-default-location "Toulon, France"
+  "*Your favorite location for xml-weather builtin.
+You should get it with `xml-weather-show-id' to avoid error.")
+
+;;;###autoload
 (defvar xml-weather-default-id "FRXX0098"
-  "*Your favorite place for weather builtin.
-You can get it with `xml-weather-show-id'.")
+  "*The ID corresponding to `xml-weather-default-location'.
+You should get it with `xml-weather-show-id' to avoid error.")
 
 ;;;###autoload
 (defvar xml-weather-timer-delay 3600
-  "*Send a new Builtin all the `xml-weather-timer-delay' seconds.")
+  "*Refresh the xml-weather Builtin all the `xml-weather-timer-delay' seconds.
+Only used with ticker.")
 
 ;;;###autoload
 (defvar xml-weather-default-icons-directory
-  "/home/thierry/download/xml-weather-icons/icons/31x31")
+  "/home/thierry/download/xml-weather-icons/icons/31x31"
+  "Path to your icons directory given with the xml-weather kit.
+You will have errors if you use another icons set than the xml-weather one.")
 
 ;;;###autoload
 (defvar xml-weather-mode-map
@@ -174,10 +182,15 @@ Special commands:
 
 (defun xml-weather-authentify ()
   "Authentify user from .authinfo file.
-You have to setup correctly `auth-sources' to make this function
+
+You have to setup correctly `auth-source' to make this function
 finding the path of your .authinfo file that is normally ~/.authinfo.
+See \(info \"\(auth\)Top\"\).
 Entry in .authinfo should be:
-machine xoap.weather.com port http login xxxxx password xxxxxx"
+
+machine xoap.weather.com port http login xxxxx password xxxxxx
+
+This function is intended to be called inside a `let' binding."
   (let ((xml-weather-auth
          (auth-source-user-or-password  '("login" "password")
                                         "xoap.weather.com"
@@ -195,15 +208,15 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
          (url-request-data (encode-coding-string place 'utf-8))
          (data             (with-current-buffer (url-retrieve-synchronously url)
                              (buffer-string))))
-    (with-current-buffer (get-buffer-create "*xml-weather*")
+    (with-temp-buffer
       (erase-buffer)
       (insert data)
-        (loop
-           with l = (xml-get-children (car (xml-parse-region (point-min)
-                                                             (point-max)))
-                                      'loc)
-           for i in l
-           collect (cons (car (last i)) (xml-get-attribute i 'id))))))
+      (loop
+         with l = (xml-get-children (car (xml-parse-region (point-min)
+                                                           (point-max)))
+                                    'loc)
+         for i in l
+         collect (cons (car (last i)) (xml-get-attribute i 'id))))))
 
 ;; Second step: Get the xml info for the ID choosen:
 ;; http://xoap.weather.com/weather/local/[locid]
@@ -240,9 +253,9 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
   (interactive "sName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
-         (id        (completing-read "Choose a place: " name-list nil t)))
-    (setq id (cdr (assoc id id-list)))
-    (message "ID code for %s is %s" place id)))
+         (id-name   (completing-read "Choose a place: " name-list nil t))
+         (id (cdr (assoc id-name id-list))))
+    (message "ID code for %s is %s" id-name id)))
 
 ;; Third step convert xml info to alist
 (defun xml-weather-get-alist ()
@@ -469,6 +482,20 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
          (id        (completing-read "Choose a place: " name-list nil t))
          (id-pair   (assoc id id-list)))
     (xml-weather-forecast id-pair 'update)))
+
+;;;###autoload
+(defun* xml-weather-today-favorite (&optional (location xml-weather-default-location)
+                                              (id xml-weather-default-id)) 
+  "Display an xml-weather builtin for `location'.
+If `location' and/or `id' are nil, `xml-weather-today-at' will be used."
+  (interactive)
+  (if (and location
+           id)
+      (let ((id-pair (cons location
+                           id)))
+        (xml-weather-now id-pair 'update))
+      (let ((place (read-string "CityName: ")))
+        (xml-weather-today-at place))))
 
 ;;; xml-weather ticker
 (defvar xml-weather-ticker-timer1 nil)
