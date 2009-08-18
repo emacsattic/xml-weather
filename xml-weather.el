@@ -471,6 +471,9 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
     (xml-weather-forecast id-pair 'update)))
 
 ;;; xml-weather ticker
+(defvar xml-weather-ticker-timer1 nil)
+(defvar xml-weather-ticker-timer2 nil)
+
 (defun xml-weather-get-today-list ()
   "Return a list that will be used to setup the ticker message.
 The list is made with the current xml weather buffer."
@@ -532,8 +535,6 @@ If optional arg `id' is used refresh infos of this `id'."
     (xml-weather-get-info-on-id id))
   (xml-weather-message (xml-weather-get-today-string)))
 
-(defvar xml-weather-ticker-timer1 nil)
-(defvar xml-weather-ticker-timer2 nil)
 (defun xml-weather-start-ticker-timers ()
   "Start all timers used by `xml-weather-run-ticker'.
 `xml-weather-ticker-timer1' update xml-weather buffer all the `xml-weather-timer-delay'
