@@ -156,16 +156,19 @@ Special commands:
 
 ;;;###autoload
 (defun xml-weather-quit ()
+  "Quit xml-weather without killing buffer."
   (interactive)
   (quit-window))
 
 ;;;###autoload
 (defun xml-weather-next-day ()
+  "Go to next day in xml-weather forecast."
   (interactive)
   (forward-char 1) (search-forward "*" nil t) (forward-line 0))
 
 ;;;###autoload
 (defun xml-weather-precedent-day ()
+  "Go to precedent day in xml-weather forecast."
   (interactive)
   (forward-char -1) (search-backward "*" nil t) (forward-line 0))
 
@@ -186,7 +189,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;; First step: Get ID of places
 (defun xml-weather-get-place-id (place)
-  "Get all ID corresponding to place."
+  "Return an alist of all ID corresponding to place.
+Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
   (let* ((url              (format xml-weather-format-id-url place))
          (url-request-data (encode-coding-string place 'utf-8))
          (data             (with-current-buffer (url-retrieve-synchronously url)
@@ -212,6 +216,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 ;; &prod=xoap&par=[partner id]&key=[license key]
 
 (defun xml-weather-get-info-on-id (id)
+  "Return an xml buffer with xml-weather infos on `id'."
   (let* (xml-weather-login
          xml-weather-key
          (url  (progn
@@ -231,6 +236,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;;;###autoload
 (defun xml-weather-show-id (place)
+  "Interactively show ID corresponding to `place'."
   (interactive "sName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
@@ -240,6 +246,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;; Third step convert xml info to alist
 (defun xml-weather-get-alist ()
+  "Parse the xml buffer and return an alist of all infos."
   (with-current-buffer "*xml-weather*"
     (let* ((loc           (xml-get-children (car (xml-parse-region (point-min)
                                                                    (point-max)))
@@ -329,6 +336,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;; Last step pprint the infos in alist
 (defun xml-weather-pprint-today ()
+  "Print the xml-weather info of current day in *xml-weather-meteo* buffer."
   (let ((data (xml-weather-get-alist)))
     (with-current-buffer (get-buffer-create "*xml-weather-meteo*")
       (erase-buffer)
@@ -354,6 +362,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (xml-weather-mode))
 
 (defun xml-weather-insert-maybe-icons (elm)
+  "Insert infos in all entries of an xml-weather builtin.
+Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' exists."
   (insert (concat "  " (car elm)))
   (if (file-exists-p xml-weather-default-icons-directory)
       (if (equal (car elm) "Cond:")
@@ -372,6 +382,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
         (insert (propertize info 'face '((:foreground "red"))) "\n"))))
   
 (defun xml-weather-pprint-forecast (station)
+  "Print the xml-weather info of forecast for `station' in *xml-weather-meteo* buffer."
   (let ((data (xml-weather-get-alist)))
     (with-current-buffer (get-buffer-create "*xml-weather-meteo*")
       (erase-buffer)
@@ -407,8 +418,10 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     (goto-char (point-min))
     (xml-weather-mode)))
 
-(defvar xml-weather-last-id nil)
+(defvar xml-weather-last-id nil
+  "Remember the last ID used. it is a pair.")
 (defun xml-weather-now (id-pair &optional update)
+  "Call non interactively the pprinter for today weather."
   (let ((id      (cdr id-pair)))
     (setq xml-weather-last-id id-pair)
     (when update
@@ -416,6 +429,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
     (xml-weather-pprint-today)))
 
 (defun xml-weather-forecast (id-pair &optional update)
+  "Call non interactively the pprinter for forecast."
   (let ((id      (cdr id-pair))
         (station (car id-pair)))
   (setq xml-weather-last-id id-pair)
@@ -424,17 +438,21 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   (xml-weather-pprint-forecast station)))
 
 (defun xml-weather-button-func1 (button)
+  "Function used by the forecast button."
   (xml-weather-forecast xml-weather-last-id))
 
 (defun xml-weather-button-func2 (button)
+  "Function used by the today weather button."
   (xml-weather-now xml-weather-last-id))
 
 (defun xml-weather-button-func3 (button)
+  "Function used by the search button."
   (let ((place (read-string "CityName: ")))
     (xml-weather-today-at place)))
 
 ;;;###autoload
 (defun xml-weather-today-at (place)
+  "Call interactively xml weather for meteo of today."
   (interactive "sCityName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
@@ -444,6 +462,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;;;###autoload
 (defun xml-weather-forecast-at (place)
+  "Call interactively xml weather for forecast."
   (interactive "sCityName: ")
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
@@ -453,6 +472,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;;; xml-weather ticker
 (defun xml-weather-get-today-list ()
+  "Return a list that will be used to setup the ticker message.
+The list is made with the current xml weather buffer."
   (let ((data (xml-weather-get-alist)))
     (loop for i in (cadr (assoc 'info data))
        if (listp i)
@@ -464,10 +485,13 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
        finally return (append a b))))
 
 (defun xml-weather-get-today-string ()
+  "Setup the message for ticker from the current xml buffer."
   (mapconcat 'identity (xml-weather-get-today-list) " | "))
 
 
 (defun* xml-weather-message (&rest msg)
+  "Send a rolling message of today xml-weather in minibuffer.
+It will stop if keyboard is used or after `xml-weather-default-show-message-times'."
   (setq msg (concat "  <XML-WEATHER-BUILTIN>: "
                     (apply 'format msg) ; == (car msg)
                     "            "))
@@ -502,6 +526,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 
 (defun xml-weather-run-message-builtin (&optional id)
+  "Run `xml-weather-message' with current infos.
+If optional arg `id' is used refresh infos of this `id'."
   (when id
     (xml-weather-get-info-on-id id))
   (xml-weather-message (xml-weather-get-today-string)))
@@ -509,6 +535,9 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 (defvar xml-weather-ticker-timer1 nil)
 (defvar xml-weather-ticker-timer2 nil)
 (defun xml-weather-start-ticker-timers ()
+  "Start all timers used by `xml-weather-run-ticker'.
+`xml-weather-ticker-timer1' update xml-weather buffer all the `xml-weather-timer-delay'
+`xml-weather-ticker-timer2' run an idle timer every 65 sec."
   (setq xml-weather-ticker-timer1
         (run-with-timer 60
                         xml-weather-timer-delay
@@ -523,6 +552,8 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
   
 ;;;###autoload
 (defun xml-weather-run-ticker ()
+  "Start interactively the xml weather timers for ticker.
+A rolling message will be sent all the 65 sec and updated all the `xml-weather-timer-delay' sec."
   (interactive)
   (when (or xml-weather-ticker-timer1
             xml-weather-ticker-timer2)
@@ -531,6 +562,7 @@ machine xoap.weather.com port http login xxxxx password xxxxxx"
 
 ;;;###autoload
 (defun xml-weather-ticker-cancel-timer ()
+  "Kill all the xml weather timers and stop ticker."
   (interactive)
   (cancel-timer xml-weather-ticker-timer1)
   (setq xml-weather-ticker-timer1 nil)
