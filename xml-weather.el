@@ -151,7 +151,11 @@ You will have errors if you use another icons set than the xml-weather one.")
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
     (define-key map (kbd "S-<down>") 'xml-weather-next-day)
-    (define-key map (kbd "S-<up>") 'xml-weather-precedent-day)
+    (define-key map (kbd "S-<up>")   'xml-weather-precedent-day)
+    (define-key map (kbd "<down>")   'xml-weather-next-button)
+    (define-key map (kbd "<up>")     'xml-weather-precedent-button)
+    (define-key map (kbd "<right>")  'xml-weather-press-button)
+    (define-key map (kbd "<left>")   'xml-weather-toggle-today-forecast)
     map)
   "Keymap used for `xml-weather' commands.")
 
@@ -179,6 +183,31 @@ Special commands:
   "Go to precedent day in xml-weather forecast."
   (interactive)
   (forward-char -1) (search-backward "*" nil t) (forward-line 0))
+
+;;;###autoload
+(defun xml-weather-next-button ()
+  (interactive)
+  (forward-button 1))
+
+;;;###autoload
+(defun xml-weather-precedent-button ()
+  (interactive)
+  (forward-button -1))
+
+;;;###autoload
+(defun xml-weather-press-button ()
+  (interactive)
+  (when (button-at (point))
+    (push-button)))
+
+(defvar xml-weather-today-buffer-p nil)
+;;;###autoload
+(defun xml-weather-toggle-today-forecast ()
+  (interactive)
+  (setq xml-weather-today-buffer-p (not xml-weather-today-buffer-p))
+  (if xml-weather-today-buffer-p
+      (xml-weather-forecast xml-weather-last-id)
+      (xml-weather-now xml-weather-last-id)))
 
 (defun xml-weather-authentify ()
   "Authentify user from .authinfo file.
@@ -452,10 +481,12 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
 
 (defun xml-weather-button-func1 (button)
   "Function used by the forecast button."
+  (setq xml-weather-today-buffer-p (not xml-weather-today-buffer-p))
   (xml-weather-forecast xml-weather-last-id))
 
 (defun xml-weather-button-func2 (button)
   "Function used by the today weather button."
+  (setq xml-weather-today-buffer-p (not xml-weather-today-buffer-p))
   (xml-weather-now xml-weather-last-id))
 
 (defun xml-weather-button-func3 (button)
