@@ -176,13 +176,15 @@ Special commands:
 (defun xml-weather-next-day ()
   "Go to next day in xml-weather forecast."
   (interactive)
-  (forward-char 1) (search-forward "*" nil t) (forward-line 0))
+  (forward-char 1) (search-forward "*" nil t) (forward-line 0)
+  (recenter 0))
 
 ;;;###autoload
 (defun xml-weather-precedent-day ()
   "Go to precedent day in xml-weather forecast."
   (interactive)
-  (forward-char -1) (search-backward "*" nil t) (forward-line 0))
+  (forward-char -1) (search-backward "*" nil t) (forward-line 0)
+  (recenter 0))
 
 ;;;###autoload
 (defun xml-weather-next-button ()
