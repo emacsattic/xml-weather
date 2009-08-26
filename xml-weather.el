@@ -300,6 +300,14 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
          (id (cdr (assoc id-name id-list))))
     (message "ID code for %s is %s" id-name id)))
 
+(defun xml-weather-set-number-file-name (arg)
+  "When `arg' < 10 add a 0 before it.
+`arg' can be a string or a number."
+  (let ((n (if (stringp arg) (string-to-number arg) arg)))
+    (if (and (< n 10) (> n 0))
+        (substring (int-to-string (/ (float n) 100)) 2)
+        (int-to-string n))))
+
 ;; Third step convert xml info to alist
 (defun xml-weather-get-alist ()
   "Parse the xml buffer and return an alist of all infos."
@@ -316,7 +324,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for tmp = (caddr (assoc 'tmp i))
                              for flik = (caddr (assoc 'flik i))
                              for wea = (caddr (assoc 't i))
-                             for icon = (caddr (assoc 'icon i))
+                             for icon = (xml-weather-set-number-file-name (caddr (assoc 'icon i)))
                              for bar = (caddr (assoc 'r (assoc 'bar i)))
                              for wind-dir-d = (caddr (assoc 'd (assoc 'wind i)))
                              for wind-dir = (caddr (assoc 't (assoc 'wind i)))
@@ -358,7 +366,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for wind-dir = (caddr (assoc 't (assoc 'wind (assoc 'part (cdr i)))))
                              for wind-spd = (caddr (assoc 's (assoc 'wind (assoc 'part (cdr i)))))
                              for wea = (caddr (assoc 't (assoc 'part (cdr i))))
-                             for icon = (caddr (assoc 'icon (assoc 'part (cdr i))))
+                             for icon = (xml-weather-set-number-file-name (caddr (assoc 'icon (assoc 'part (cdr i)))))
                              for hmid = (caddr (assoc 'hmid (assoc 'part (cdr i))))
                              collect (cons d (list (cons "maxi:" (concat (or hi-temp "") xml-weather-temperature-sigle))
                                                    (cons "mini:" (concat (or low-temp "") xml-weather-temperature-sigle))
@@ -379,7 +387,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for wind-dir = (caddr (assoc 't (assoc 'wind part2)))
                              for wind-spd = (caddr (assoc 's (assoc 'wind part2)))
                              for wea = (caddr (assoc 't part2))
-                             for icon = (caddr (assoc 'icon (assoc 'part (cdr i))))
+                             for icon = (xml-weather-set-number-file-name (caddr (assoc 'icon (assoc 'part (cdr i)))))
                              for hmid = (caddr (assoc 'hmid part2))
                              collect (cons d (list (cons "maxi:" (concat (or hi-temp "") xml-weather-temperature-sigle))
                                                    (cons "mini:" (concat (or low-temp "") xml-weather-temperature-sigle))
