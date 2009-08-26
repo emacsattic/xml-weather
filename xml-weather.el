@@ -154,6 +154,10 @@ Only used with ticker.")
   "Path to your icons directory given with the xml-weather kit.
 You will have errors if you use another icons set than the xml-weather one.")
 
+(defvar xml-weather-moon-icons-directory
+  "~/download/xml-weather-icons/moon-icons2/31X31/"
+  "The directory where your moon icons are.")
+
 ;;;###autoload
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
@@ -317,6 +321,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for wind-dir-d = (caddr (assoc 'd (assoc 'wind i)))
                              for wind-dir = (caddr (assoc 't (assoc 'wind i)))
                              for gust = (caddr (assoc 'gust (assoc 'wind i)))
+                             for moon = (caddr (assoc 't (assoc 'moon i)))
                              collect (list (cons "Date:" (or lsup ""))
                                            (cons "Observatory:" (or obst ""))
                                            (cons "Temperature:" (concat (or tmp "") xml-weather-temperature-sigle))
@@ -324,7 +329,8 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                                            (cons "Cond:" (or (list (concat icon ".png") wea) ""))
                                            (cons "Pression:" (or bar ""))
                                            (cons "Wind dir:" (or (concat wind-dir  "(" wind-dir-d "°)") ""))
-                                           (cons "Gust:" (or gust "")))))
+                                           (cons "Gust:" (or gust ""))
+                                           (cons "Moon:" (or moon "")))))
            (today-info    (loop for i in loc
                              for dnam = (caddr (assoc 'dnam i))
                              for tm = (caddr (assoc 'tm i))
@@ -421,26 +427,37 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
     (align-regexp (point-min) (point-max) "\\(:\\)" 1 1 nil))
   (xml-weather-mode))
 
+
 (defun xml-weather-insert-maybe-icons (elm)
   "Insert infos in all entries of an xml-weather builtin.
 Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' exists."
   (insert (concat "  " (car elm)))
-  (if (file-exists-p xml-weather-default-icons-directory)
-      (if (equal (car elm) "Cond:")
-          (let* ((fname (cadr elm))
-                 (img   (unless (equal fname ".png")
-                          (create-image (expand-file-name fname xml-weather-default-icons-directory)))))
-            (if img
-                (progn
-                  (insert-image img)
-                  (insert (propertize (car (last elm)) 'face '((:foreground "red"))) "\n"))
-                (insert "")))
-          (insert (propertize (cdr elm) 'face '((:foreground "red"))) "\n"))
-      (let ((info (if (eq (safe-length elm) 1)
-                      (cdr elm)
-                      (car (last elm)))))
-        (insert (propertize info 'face '((:foreground "red"))) "\n"))))
-  
+  (let ((info (if (eq (safe-length elm) 1)
+                  (cdr elm)
+                  (car (last elm)))))
+    (if info
+        (cond ((and (file-exists-p xml-weather-default-icons-directory) (equal (car elm) "Cond:"))
+               (let* ((fname (cadr elm))
+                      (img   (unless (equal fname ".png")
+                               (create-image (expand-file-name fname xml-weather-default-icons-directory)))))
+                 (if img
+                     (progn
+                       (insert-image img)
+                       (insert (propertize info 'face '((:foreground "red"))) "\n"))
+                     (insert ""))))
+              ((and (file-exists-p xml-weather-moon-icons-directory) (equal (car elm) "Moon:"))
+               (let* ((lsname (split-string info))
+                      (fname  (concat (downcase (car lsname)) "_" (downcase (cadr lsname)) ".jpg")) 
+                      (img    (unless (equal fname ".jpg")
+                                (create-image (expand-file-name fname xml-weather-moon-icons-directory)))))
+                 (if img
+                     (progn
+                       (insert-image img)
+                       (insert (propertize info 'face '((:foreground "red"))) "\n"))
+                     (insert ""))))
+              (t (insert (propertize info 'face '((:foreground "red"))) "\n")))
+        (insert ""))))
+    
 (defun xml-weather-pprint-forecast (station)
   "Print the xml-weather info of forecast for `station' in *xml-weather-meteo* buffer."
   (let ((data (xml-weather-get-alist)))
