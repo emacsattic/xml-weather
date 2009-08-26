@@ -106,6 +106,14 @@
   "*m mean metric, you will have wind speed in km/h, temperature in °C and so on.")
 
 ;;;###autoload
+(defvar xml-weather-temperature-sigle (if (equal xml-weather-unit "m") "°C" "°F")
+  "*Temperature sigle to use depending you use metric or english system.")
+
+;;;###autoload
+(defvar xml-weather-wind-speed-sigle (if (equal xml-weather-unit "m") " Km/h" " Mp/h")
+  "*Wind speed sigle to use depending you use metric or english system.")
+
+;;;###autoload
 (defvar xml-weather-login nil
   "*Your xml-weather Login.
 You should not set this variable directly. See `xml-weather-authentify'.
@@ -302,6 +310,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for lsup = (caddr (assoc 'lsup i))
                              for obst = (caddr (assoc 'obst i))
                              for tmp = (caddr (assoc 'tmp i))
+                             for flik = (caddr (assoc 'flik i))
                              for wea = (caddr (assoc 't i))
                              for icon = (caddr (assoc 'icon i))
                              for bar = (caddr (assoc 'r (assoc 'bar i)))
@@ -310,7 +319,8 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for gust = (caddr (assoc 'gust (assoc 'wind i)))
                              collect (list (cons "Date:" (or lsup ""))
                                            (cons "Observatory:" (or obst ""))
-                                           (cons "Temperature:" (concat (or tmp "") "°C"))
+                                           (cons "Temperature:" (concat (or tmp "") xml-weather-temperature-sigle))
+                                           (cons "Feel Like:" (concat (or flik "") xml-weather-temperature-sigle))
                                            (cons "Cond:" (or (list (concat icon ".png") wea) ""))
                                            (cons "Pression:" (or bar ""))
                                            (cons "Wind dir:" (or (concat wind-dir  "(" wind-dir-d "°)") ""))
@@ -344,12 +354,12 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for wea = (caddr (assoc 't (assoc 'part (cdr i))))
                              for icon = (caddr (assoc 'icon (assoc 'part (cdr i))))
                              for hmid = (caddr (assoc 'hmid (assoc 'part (cdr i))))
-                             collect (cons d (list (cons "maxi:" (or hi-temp ""))
-                                                   (cons "mini:" (or low-temp ""))
+                             collect (cons d (list (cons "maxi:" (concat (or hi-temp "") xml-weather-temperature-sigle))
+                                                   (cons "mini:" (concat (or low-temp "") xml-weather-temperature-sigle))
                                                    (cons "sunrise:" (or sunr ""))
                                                    (cons "sunset:" (or suns ""))
                                                    (cons "Wind direction:" (or wind-dir ""))
-                                                   (cons "Wind speed:" (or wind-spd ""))
+                                                   (cons "Wind speed:" (concat (or wind-spd "") xml-weather-wind-speed-sigle))
                                                    (cons "Cond:" (or (list (concat icon ".png") wea) ""))
                                                    (cons "Humidity:" (concat (or hmid "") "%"))))))
            (night-alist   (loop for i in day-list
@@ -365,12 +375,12 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                              for wea = (caddr (assoc 't part2))
                              for icon = (caddr (assoc 'icon (assoc 'part (cdr i))))
                              for hmid = (caddr (assoc 'hmid part2))
-                             collect (cons d (list (cons "maxi:" (or hi-temp ""))
-                                                   (cons "mini:" (or low-temp ""))
+                             collect (cons d (list (cons "maxi:" (concat (or hi-temp "") xml-weather-temperature-sigle))
+                                                   (cons "mini:" (concat (or low-temp "") xml-weather-temperature-sigle))
                                                    (cons "sunrise:" (or sunr ""))
                                                    (cons "sunset:" (or suns ""))
                                                    (cons "Wind direction:" (or wind-dir ""))
-                                                   (cons "Wind speed:" (or wind-spd ""))
+                                                   (cons "Wind speed:" (concat (or wind-spd "") xml-weather-wind-speed-sigle))
                                                    (cons "Cond:" (or (list (concat icon ".png") wea) ""))
                                                    (cons "Humidity:" (concat (or hmid "") "%")))))))
       (setq morning-alist (cons 'morning morning-alist))
@@ -407,6 +417,8 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
                  'action 'xml-weather-button-func4
                  'face '((:background "green")))
   (goto-char (point-min))
+  (save-excursion
+    (align-regexp (point-min) (point-max) "\\(:\\)" 1 1 nil))
   (xml-weather-mode))
 
 (defun xml-weather-insert-maybe-icons (elm)
@@ -464,6 +476,8 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
                      'face '((:background "green"))))
     (switch-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
+    (save-excursion
+      (align-regexp (point-min) (point-max) "\\(:\\)" 1 1 nil))
     (xml-weather-mode)))
 
 (defvar xml-weather-last-id nil
