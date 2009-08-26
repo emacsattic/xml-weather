@@ -402,6 +402,10 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
   (insert-button "[New Search]"
                  'action 'xml-weather-button-func3
                  'face '((:background "green")))
+  (newline 2)
+  (insert-button "[Refresh]"
+                 'action 'xml-weather-button-func4
+                 'face '((:background "green")))
   (goto-char (point-min))
   (xml-weather-mode))
 
@@ -495,6 +499,10 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
   "Function used by the search button."
   (let ((place (read-string "CityName: ")))
     (xml-weather-today-at place)))
+
+(defun xml-weather-button-func4 (button)
+  "Function used by the refresh button."
+  (xml-weather-now xml-weather-last-id 'update))
 
 ;;;###autoload
 (defun xml-weather-today-at (place)
