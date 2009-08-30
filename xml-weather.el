@@ -61,10 +61,17 @@
 ;;    you will find in your email.
 ;;    Put the icons in the directory of your choice and set it in your .emacs:
 ;;    (setq xml-weather-default-icons-directory "path/to/your/icons/31x31")
-;;    Notes: I use the 31x31 directory but you can choose bigger icons if you want.
-;;           If `xml-weather-default-icons-directory' is nil or doesn't exist,
-;;           your builtin will be displayed with text only.
-;;           
+;;    NOTE: I use the 31x31 directory but you can choose bigger icons if you want.
+;;          If `xml-weather-default-icons-directory' is nil or doesn't exist,
+;;          your builtin will be displayed with text only.
+;;
+;; 5) (Facultative) Get the moon icons set:
+;;    http://mercurial.intuxication.org/hg/xml-weather/file/66f18bcb2ed8/moon-icons2
+;;    And
+;;    (setq xml-weather-moon-icons-directory "Path/to/moon/icons/31X31")
+;;    NOTE: If `xml-weather-moon-icons-directory' is not found, an empty image will be
+;;    displayed.
+;;
 ;; Usage:
 ;; =====
 ;; M-x xml-weather-today-at (you will have a button for forecast)
