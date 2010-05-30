@@ -99,6 +99,8 @@
 (eval-when-compile (require 'cl))
 (require 'xml)
 (require 'derived)
+(require 'url)
+
 
 ;;;###autoload
 (defvar xml-weather-format-id-url
@@ -181,8 +183,9 @@ You will have errors if you use another icons set than the xml-weather one.")
   "Keymap used for `xml-weather' commands.")
 
 ;;;###autoload
-(define-derived-mode xml-weather-mode text-mode "xml-weather"
-                     "Major mode to get info from xml-weather.
+(define-derived-mode xml-weather-mode
+    text-mode "xml-weather"
+    "Major mode to get info from xml-weather.
 
 Special commands:
 \\{xml-weather-mode-map}")
@@ -306,7 +309,7 @@ Each element is composed of a pair like \(\"Toulon, France\" . \"FRXX0098\"\)."
   (let* ((id-list   (xml-weather-get-place-id place))
          (name-list (loop for i in id-list collect (car i)))
          (id-name   (completing-read "Choose a place: " name-list nil t))
-         (id (cdr (assoc id-name id-list))))
+         (id        (cdr (assoc id-name id-list))))
     (message "ID code for %s is %s" id-name id)))
 
 (defun xml-weather-set-number-file-name (arg)
