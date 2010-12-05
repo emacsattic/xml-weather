@@ -190,6 +190,11 @@ You will have errors if you use another icons set than the xml-weather one.")
 Special commands:
 \\{xml-weather-mode-map}")
 
+(defgroup xml-weather nil
+  "Mode that provide incremental searching in buffer."
+  :prefix "xml-weather-"
+  :group 'text)
+
 ;;;###autoload
 (defun xml-weather-quit ()
   "Quit xml-weather without killing buffer."
@@ -437,15 +442,15 @@ ARG can be a string or a number."
   (newline)
   (insert-button "[Forecast for next 4 days]"
                  'action 'xml-weather-button-func1
-                 'face '((:background "green")))
+                 'face 'xml-weather-button)
   (newline 2)
   (insert-button "[New Search]"
                  'action 'xml-weather-button-func3
-                 'face '((:background "green")))
+                 'face 'xml-weather-button)
   (newline 2)
   (insert-button "[Refresh]"
                  'action 'xml-weather-button-func4
-                 'face '((:background "green")))
+                 'face 'xml-weather-button)
   (goto-char (point-min))
   (save-excursion
     (align-regexp (point-min) (point-max) "\\(:\\)" 1 1 nil))
@@ -467,7 +472,7 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
                  (if img
                      (progn
                        (insert-image img)
-                       (insert (propertize info 'face '((:foreground "red"))) "\n"))
+                       (insert (propertize info 'face 'xml-weather-data) "\n"))
                      (insert ""))))
               ((and (file-exists-p xml-weather-moon-icons-directory) (equal (car elm) "Moon:"))
                (let* ((lsname (split-string info))
@@ -479,9 +484,9 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
                  (if img
                      (progn
                        (insert-image img)
-                       (insert (propertize info 'face '((:foreground "red"))) "\n"))
+                       (insert (propertize info 'face 'xml-weather-data) "\n"))
                      (insert ""))))
-              (t (insert (propertize info 'face '((:foreground "red"))) "\n")))
+              (t (insert (propertize info 'face 'xml-weather-data) "\n")))
         (insert ""))))
     
 (defun xml-weather-pprint-forecast (station)
@@ -502,12 +507,12 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
                 (xml-weather-insert-maybe-icons m)
               else
               do
-                (insert (concat "\n* " (propertize m 'face '((:foreground "blue")))"\n\n"))
-                (insert (propertize "Morning:\n" 'face '((:foreground "lightgreen")))))
+                (insert (concat "\n* " (propertize m 'face 'xml-weather-day)"\n\n"))
+                (insert (propertize "Morning:\n" 'face 'xml-weather-am-pm)))
          for j in (assoc 'night data)
          if (listp j)
          do
-           (insert (propertize "Afternoon:\n" 'face '((:foreground "lightgreen"))))
+           (insert (propertize "Afternoon:\n" 'face 'xml-weather-am-pm))
            (loop
               for a in j
               if (listp a)
@@ -516,12 +521,29 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
       (insert "\n\n")
       (insert-button "[Back To Today weather]"
                      'action 'xml-weather-button-func2
-                     'face '((:background "green"))))
+                     'face 'xml-weather-button))
     (switch-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
     (save-excursion
       (align-regexp (point-min) (point-max) "\\(:\\)" 1 1 nil))
     (xml-weather-mode)))
+
+(defface xml-weather-day
+    '((t (:foreground "Goldenrod")))
+  "*Face used for day in xml-weather buffer."
+  :group 'xml-weather)
+(defface xml-weather-am-pm
+    '((t (:foreground "lightgreen")))
+  "*Face used for morning afternoon title in xml-weather buffer."
+  :group 'xml-weather)
+(defface xml-weather-button
+    '((t (:background "green" :foreground "black")))
+  "*Face used for button in xml-weather buffer."
+  :group 'xml-weather)
+(defface xml-weather-data
+    '((t (:foreground "red")))
+  "*Face used for data in xml-weather buffer."
+  :group 'xml-weather)
 
 (defvar xml-weather-last-id nil
   "Remember the last ID used. it is a pair.")
