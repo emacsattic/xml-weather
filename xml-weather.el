@@ -171,6 +171,7 @@ You will have errors if you use another icons set than the xml-weather one.")
 (defvar xml-weather-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map [?q] 'xml-weather-quit)
+    (define-key map [?g] 'xml-weather-refresh)
     (define-key map (kbd "<tab>") 'xml-weather-next-day)
     (define-key map (kbd "C-<tab>")   'xml-weather-precedent-day)
     (define-key map (kbd "S-<down>") 'xml-weather-next-day)
@@ -521,6 +522,10 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
       (insert "\n\n")
       (insert-button "[Back To Today weather]"
                      'action 'xml-weather-button-func2
+                     'face 'xml-weather-button)
+      (insert "\n\n")
+      (insert-button "[Refresh]"
+                     'action 'xml-weather-button-func4
                      'face 'xml-weather-button))
     (switch-to-buffer "*xml-weather-meteo*")
     (goto-char (point-min))
@@ -581,7 +586,14 @@ Insert an icon in the Cond: entry only if `xml-weather-default-icons-directory' 
 
 (defun xml-weather-button-func4 (button)
   "Function used by the refresh button."
-  (xml-weather-now xml-weather-last-id 'update))
+  (xml-weather-refresh))
+
+;;;###autoload
+(defun xml-weather-refresh ()
+  (interactive)
+    (if xml-weather-today-buffer-p
+        (xml-weather-forecast xml-weather-last-id 'update)
+        (xml-weather-now xml-weather-last-id 'update)))
 
 ;;;###autoload
 (defun xml-weather-today-at (place)
